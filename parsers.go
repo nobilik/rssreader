@@ -23,7 +23,7 @@ var client = &http.Client{
 func Parse(feedURLs ...string) ([]RssItem, []error) {
 	var wg sync.WaitGroup
 	results := make(chan []RssItem)
-	var errors []error
+	errorsChan := make(chan error)
 
 	wg.Add(len(feedURLs))
 
@@ -33,7 +33,7 @@ func Parse(feedURLs ...string) ([]RssItem, []error) {
 			items, err := parseURL(url)
 			if err != nil {
 				// for more info it can be modified to know which feed falls
-				errors = append(errors, err)
+				errorsChan <- err
 				return
 			}
 			results <- items
@@ -43,9 +43,17 @@ func Parse(feedURLs ...string) ([]RssItem, []error) {
 	go func() {
 		wg.Wait()
 		close(results)
+		close(errorsChan)
 	}()
 
-	var allItems []RssItem
+	allItems := []RssItem{}
+	var errors []error
+
+	go func() {
+		for err := range errorsChan {
+			errors = append(errors, err)
+		}
+	}()
 
 	for items := range results {
 		allItems = append(allItems, items...)

@@ -1,6 +1,7 @@
 package rssreader
 
 import (
+	"strings"
 	"time"
 )
 
@@ -36,11 +37,11 @@ func mapItems(parsed *feed) []RssItem {
 	var result []RssItem
 	for _, item := range parsed.Items {
 		r := RssItem{
-			Source:      parsed.Title,
+			Source:      strings.TrimSpace(parsed.Title),
 			SourceURL:   parsed.Link,
-			Title:       item.Title,
+			Title:       strings.TrimSpace(item.Title),
 			Link:        item.Link,
-			Description: item.Description,
+			Description: strings.TrimSpace(item.Description),
 		}
 		pd, err := parseTime(item.PublishDate)
 		if err == nil {
